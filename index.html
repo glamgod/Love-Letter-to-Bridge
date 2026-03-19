@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bridge: A Love Letter</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #f8f7f5;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  min-height: 100vh;
+}
+
+#grid-view {
+  padding: 48px 24px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.gallery-title {
+  text-align: center;
+  font-family: Cambria, 'Times New Roman', serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  color: #666;
+  margin-bottom: 10px;
+  opacity: 0;
+  animation: fadeIn 1.2s 0.2s forwards;
+}
+
+.grid-hint {
+  text-align: center;
+  font-style: italic;
+  font-size: 1rem;
+  color: #aaa;
+  letter-spacing: 0.05em;
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: fadeIn 1.2s 0.4s forwards;
+}
+@keyframes fadeIn { to { opacity: 1; } }
+
+.masonry {
+  columns: 4;
+  column-gap: 4px;
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 4px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: block;
+}
+
+.masonry-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              filter 0.4s ease;
+  filter: grayscale(5%);
+}
+
+.masonry-item:hover img {
+  transform: scale(1.04);
+  filter: grayscale(0%);
+}
+
+.masonry-item .overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  transition: background 0.3s;
+}
+.masonry-item:hover .overlay {
+  background: rgba(0,0,0,0.06);
+}
+
+#lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0d0d0d;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+#lightbox.open { display: flex; }
+
+#lb-img-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 88px 72px;
+}
+
+#lb-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+#lb-img.visible { opacity: 1; }
+
+.lb-arrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 20px 24px;
+  transition: color 0.2s;
+  z-index: 10;
+  line-height: 1;
+}
+.lb-arrow:hover { color: rgba(255,255,255,0.9); }
+#lb-prev { left: 0; }
+#lb-next { right: 0; }
+
+#lb-counter {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.28);
+}
+
+#lb-close {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 8px;
+  line-height: 1;
+}
+#lb-close:hover { color: white; }
+
+@media (max-width: 900px) { .masonry { columns: 3; } }
+@media (max-width: 600px) {
+  .masonry { columns: 2; }
+  #grid-view { padding: 28px 8px 60px; }
+  #lb-img-wrap { padding: 48px 40px 64px; }
+  .lb-arrow { font-size: 1.4rem; padding: 14px 12px; }
+}
+</style>
+</head>
+<body>
+
+<div id="grid-view">
+  <h1 class="gallery-title">Bridge: A Love Letter</h1>
+  <p class="grid-hint">click any image to begin</p>
+  <div class="masonry" id="masonry"></div>
+</div>
+
+<div id="lightbox">
+  <button id="lb-close" onclick="closeLightbox()">&#215;</button>
+  <div id="lb-img-wrap">
+    <img id="lb-img" src="" alt="">
+  </div>
+  <button class="lb-arrow" id="lb-prev" onclick="navigate(-1)">&#8592;</button>
+  <button class="lb-arrow" id="lb-next" onclick="navigate(1)">&#8594;</button>
+  <div id="lb-counter"></div>
+</div>
+
+<script>
+const images = [
+  'Love-Letter-Final-Two-1.jpg',
+  'Love-Letter-Final-Two-2.jpg',
+  'Love-Letter-Final-Two-3.jpg',
+  'Love-Letter-Final-Two-4.jpg',
+  'Love-Letter-Final-Two-5.jpg',
+  'Love-Letter-Final-Two-6.jpg',
+  'Love-Letter-Final-Two-7.jpg',
+  'Love-Letter-Final-Two-8.jpg',
+  'Love-Letter-Final-Two-9.jpg',
+  'Love-Letter-Final-Two-10.jpg',
+  'Love-Letter-Final-Two-11.jpg',
+  'Love-Letter-Final-Two-12.jpg',
+  'Love-Letter-Final-Two-13.jpg',
+  'Love-Letter-Final-Two-14.jpg',
+  'Love-Letter-Final-Two-15.jpg',
+  'Love-Letter-Final-Two-16.jpg',
+  'Love-Letter-Final-Two-17.jpg',
+  'Love-Letter-Final-Two-18.jpg',
+  'Love-Letter-Final-Two-19.jpg',
+  'Love-Letter-Final-Two-20.jpg',
+  'Love-Letter-Final-Two-21.jpg',
+  'Love-Letter-Final-Two-22.jpg',
+  'Love-Letter-Final-Two-23.jpg',
+  'Love-Letter-Final-Two-24.jpg',
+  'Love-Letter-Final-Two-25.jpg',
+  'Love-Letter-Final-Two-26.jpg',
+  'Love-Letter-Final-Two-27.jpg',
+  'Love-Letter-Final-Two-28.jpg',
+  'Love-Letter-Final-Two-29.jpg',
+  'Love-Letter-Final-Two-30.jpg',
+  'Love-Letter-Final-Two-31.jpg',
+  'Love-Letter-Final-Two-32.jpg',
+  'Love-Letter-Final-Two-33.jpg',
+  'Love-Letter-Final-Two-34.jpg',
+  'Love-Letter-Final-Two-35.jpg',
+  'Love-Letter-Final-Two-36.jpg',
+  'Love-Letter-Final-Two-37.jpg',
+  'Love-Letter-Final-Two-38.jpg',
+  'Love-Letter-Final-Two-39.jpg',
+  'Love-Letter-Final-Two-40.jpg',
+];
+
+let current = 0;
+const lb = document.getElementById('lightbox');
+const lbImg = document.getElementById('lb-img');
+const lbCounter = document.getElementById('lb-counter');
+const masonry = document.getElementById('masonry');
+
+images.forEach((src, i) => {
+  const item = document.createElement('div');
+  item.className = 'masonry-item';
+  item.innerHTML = `<img src="${src}" alt="Image ${i+1}" loading="lazy"><div class="overlay"></div>`;
+  item.addEventListener('click', () => openLightbox(i));
+  masonry.appendChild(item);
+});
+
+function openLightbox(idx) {
+  current = idx;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  showImage();
+}
+
+function closeLightbox() {
+  lb.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showImage() {
+  lbImg.classList.remove('visible');
+  setTimeout(() => {
+    lbImg.src = images[current];
+    if (lbImg.complete) lbImg.classList.add('visible');
+    lbImg.onload = () => lbImg.classList.add('visible');
+    lbCounter.textContent = (current + 1) + ' – ' + images.length;
+  }, 150);
+}
+
+function navigate(dir) {
+  current = (current + dir + images.length) % images.length;
+  showImage();
+}
+
+document.addEventListener('keydown', e => {
+  if (!lb.classList.contains('open')) return;
+  if (e.key === 'ArrowRight') navigate(1);
+  if (e.key === 'ArrowLeft') navigate(-1);
+  if (e.key === 'Escape') closeLightbox();
+});
+
+let touchStartX = 0;
+lb.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive:true});
+lb.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40) navigate(dx < 0 ? 1 : -1);
+}, {passive:true});
+</script>
+</body>
+</html>
